@@ -8,7 +8,7 @@ interface IPackage {
   familyDiscount: number;
 }
 
-const packageSchema: Schema = new Schema<IPackage>({
+export const packageSchema: Schema = new Schema<IPackage>({
   name: { type: String },
   price: { type: Number },
   sessionDiscount: { type: Number },

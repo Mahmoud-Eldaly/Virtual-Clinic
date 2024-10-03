@@ -1,4 +1,7 @@
 import { Schema, model, connect, Types } from "mongoose";
+import Patient from "./Patient";
+import Admin from "./Admin";
+import { DuplicateUsername } from "../utils/DublicateUserNameChecker";
 
 // interface IDoctor {
 //   name: string;
@@ -21,17 +24,42 @@ import { Schema, model, connect, Types } from "mongoose";
 
 // 2. Create a Schema corresponding to the document interface.
 const doctorSchema = new Schema({
-  name: { type: String, required: true },
-  userName: { type: String, required: true },
-  email: { type: String, required: true },
-  password: { type: String, required: true },
-  birthDate: { type: Date, required: true },
+  name: {
+    type: String,
+    required: true,
+    minLength: [1, "name can not be empty"],
+  },
+  userName: {
+    type: String,
+    required: true,
+    unique: true,
+    trim: true,
+  },
+  email: {
+    type: String,
+    required: true,
+    unique: true,
+    match: [
+      /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/,
+      "Please fill a valid email address",
+    ],
+  },
+  password: {
+    type: String,
+    required: true,
+    minLength: [8, "password must be 8 charchters minimum"],
+  },
+  birthDate: {
+    type: Date,
+    required: true,
+    max: [Date.now(), "birth date can not be in future"],
+  },
   hourlyRate: { type: Number, required: true },
   affiliation: { type: String, required: true },
   educationalBackground: { type: String, required: true },
-  nationalID: { type: String, required: true },
-  medicalDegree: { type: String, required: true },
-  medicalLicence: { type: String, required: true },
+  nationalID: { type: String },
+  medicalDegree: { type: String },
+  medicalLicence: { type: String },
   approved: { type: Boolean, default: false },
   employmentContractAccepted: { type: Boolean, default: false },
   employmentContract: { type: String },
