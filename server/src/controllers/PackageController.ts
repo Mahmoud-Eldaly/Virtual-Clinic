@@ -1,6 +1,8 @@
 import Package from "../models/Package";
 
 import { Request, Response } from "express";
+//Here Goes Endpoints related to the DB Model
+
 
 export const addPackage: (
   req: Request,

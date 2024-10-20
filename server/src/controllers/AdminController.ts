@@ -1,7 +1,10 @@
 import { Request, Response } from "express";
 import { DuplicateUsername } from "../utils/DublicateUserNameChecker";
 import Admin from "../models/Admin";
+import Doctor from "../models/Doctor";
 var bcrypt = require("bcryptjs");
+//Here Goes Endpoints related to the DB Model
+
 
 export const addAdmin: (req: Request, res: Response) => Promise<any> = async (
   req: Request,
@@ -9,21 +12,15 @@ export const addAdmin: (req: Request, res: Response) => Promise<any> = async (
 ) => {
   try {
     console.log(req.user);
-    if (req.user?.type === "admin") {
-      const noDuplicateUsername = await DuplicateUsername(req.body.userName);
-      if (noDuplicateUsername) {
-        var hash = bcrypt.hashSync(req.body.password, 8);
-        const newAdmin = new Admin({ ...req.body, password: hash });
-        const savedAdmin = await newAdmin.save();
-        console.log("added New Admin", savedAdmin);
-        return res.send(savedAdmin);
-      } else {
-        return res
-          .status(500)
-          .json({ message: "This username already in use!" });
-      }
+    const noDuplicateUsername = await DuplicateUsername(req.body.userName);
+    if (noDuplicateUsername) {
+      var hash = bcrypt.hashSync(req.body.password, 8);
+      const newAdmin = new Admin({ ...req.body, password: hash });
+      const savedAdmin = await newAdmin.save();
+      console.log("added New Admin", savedAdmin);
+      return res.send(savedAdmin);
     } else {
-      return res.status(500).json({ message: "Only Admins Are Authorized to be here!!" });
+      return res.status(500).json({ message: "This username already in use!" });
     }
   } catch (err) {
     if (err instanceof Error) {
@@ -50,3 +47,5 @@ export const removeAdmin: (
     console.log(err);
   }
 };
+
+

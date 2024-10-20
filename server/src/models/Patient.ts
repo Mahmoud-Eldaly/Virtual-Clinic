@@ -1,4 +1,4 @@
-import { Schema, model, connect, Types } from "mongoose";
+import mongoose, { Schema, model, connect, Types } from "mongoose";
 import Admin from "./Admin";
 import Doctor from "./Doctor";
 import { packageSchema } from "./Package";
@@ -7,7 +7,21 @@ enum genderEnum {
   "male",
   "female",
 }
-
+interface File {
+  _id: Types.ObjectId;
+  buffer: Buffer;
+  mimetype: string;
+  originalname: string;
+}
+const FileSchema = new Schema<File>({
+  _id: {
+    type: Schema.Types.ObjectId,
+    default: () => new mongoose.Types.ObjectId(),
+  },
+  buffer: { type: Buffer, required: true },
+  mimetype: { type: String, required: true },
+  originalname: { type: String, required: true },
+});
 // interface IPatient {
 //   name: string;
 //   userName: string;
@@ -46,6 +60,7 @@ export const patientSchema = new Schema({
       "Please fill a valid email address",
     ],
   },
+  //check strength
   password: {
     type: String,
     required: true,
@@ -89,6 +104,9 @@ export const patientSchema = new Schema({
   subscribedPackage: packageSchema,
   familyMembers: { type: Array, default: [] },
   wallet: { type: Number, default: 0 },
+  medicalHistoryItems: { type: [FileSchema], default: [] },
+  resetPasswordToken: { type: String },
+  resetPasswordExpires: { type: Date },
 });
 
 // 3. Create a Model.

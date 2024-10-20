@@ -57,14 +57,25 @@ const doctorSchema = new Schema({
   hourlyRate: { type: Number, required: true },
   affiliation: { type: String, required: true },
   educationalBackground: { type: String, required: true },
-  nationalID: { type: String },
-  medicalDegree: { type: String },
-  medicalLicence: { type: String },
+  nationalID: {
+    data: Buffer,
+    contentType: String,
+  },
+  medicalDegree: {
+    data: Buffer,
+    contentType: String,
+  },
+  medicalLicence: {
+    data: Buffer,
+    contentType: String,
+  },
   approved: { type: Boolean, default: false },
   employmentContractAccepted: { type: Boolean, default: false },
   employmentContract: { type: String },
   availableSlots: { type: Array, default: [] },
   wallet: { type: Number, default: 0 },
+  resetPasswordToken: { type: String },
+  resetPasswordExpires: { type: Date },
 });
 
 // 3. Create a Model.

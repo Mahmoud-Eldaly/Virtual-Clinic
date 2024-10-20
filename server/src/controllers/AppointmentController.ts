@@ -1,6 +1,8 @@
 import { Request, Response } from "express";
 
 import Appointment from "../models/Appointment";
+//Here Goes Endpoints related to the DB Model
+
 
 export const addAppointment: (
   req: Request,
