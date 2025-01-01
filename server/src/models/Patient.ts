@@ -7,6 +7,10 @@ enum genderEnum {
   "male",
   "female",
 }
+enum relationToPatientEnum {
+  "spouse",
+  "child",
+}
 interface File {
   _id: Types.ObjectId;
   buffer: Buffer;
@@ -22,21 +26,37 @@ const FileSchema = new Schema<File>({
   mimetype: { type: String, required: true },
   originalname: { type: String, required: true },
 });
-// interface IPatient {
-//   name: string;
-//   userName: string;
-//   email: string;
-//   password: string;
-//   birthDate: Date;
-//   gender: genderEnum;
-//   mobileNumer: string;
-//   emergencyName: string;
-//   emergencyMobileNumber: string;
-//   medical_history: string[];
-//   subscribedPackage?: Types.ObjectId;
-//   familyMembers?: Array<string | Types.ObjectId>;
-//   wallet: number;
-// }
+interface FamilyMember {
+  _id: Types.ObjectId;
+  userName?: string;
+  name: string;
+  nationalID?: string;
+  age: number;
+  gender: string;
+  relationToPatient: string;
+  memberId?: Types.ObjectId;
+  package?: any;
+  packageRenewalDate?: Date;
+}
+export const FamilyMemberSchema = new Schema<FamilyMember>({
+  _id: {
+    type: Schema.Types.ObjectId,
+    default: () => new mongoose.Types.ObjectId(),
+  },
+  userName: { type: String },
+  name: { type: String, required: true },
+  nationalID: { type: String },
+  age: { type: Number, required: true },
+  gender: { type: String, enum: Object.values(genderEnum), required: true },
+  relationToPatient: {
+    type: String,
+    enum: Object.values(relationToPatientEnum),
+    required: true,
+  },
+  memberId: { type: Schema.Types.ObjectId, required: false },
+  package: { type: packageSchema, required: false },
+  packageRenewalDate: { type: Date, required: false },
+});
 
 // 2. Create a Schema corresponding to the document interface.
 export const patientSchema = new Schema({
@@ -76,6 +96,7 @@ export const patientSchema = new Schema({
     type: String,
     required: true,
     trim: true,
+    unique: true,
     validate: {
       validator: function (v: string) {
         return /^[0-9]+$/.test(v);
@@ -101,8 +122,9 @@ export const patientSchema = new Schema({
     },
   },
   //in case admin deleted package after patient subscribed
-  subscribedPackage: packageSchema,
-  familyMembers: { type: Array, default: [] },
+  subscribedPackage: packageSchema, 
+  renewalDate: Date,
+  familyMembers: { type: [FamilyMemberSchema], default: [] },
   wallet: { type: Number, default: 0 },
   medicalHistoryItems: { type: [FileSchema], default: [] },
   resetPasswordToken: { type: String },

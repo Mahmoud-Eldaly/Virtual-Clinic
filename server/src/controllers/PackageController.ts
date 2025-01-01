@@ -3,7 +3,6 @@ import Package from "../models/Package";
 import { Request, Response } from "express";
 //Here Goes Endpoints related to the DB Model
 
-
 export const addPackage: (
   req: Request,
   res: Response
@@ -44,18 +43,32 @@ export const updatePackage: (
   req: Request,
   res: Response
 ) => Promise<void> = async (req, res) => {
-  console.log("updating",req.body)
+  console.log("updating", req.body);
   const packageId = req.params.id;
-  const updatedPackage =await Package.findByIdAndUpdate(
+  const updatedPackage = await Package.findByIdAndUpdate(
     packageId,
     { ...req.body },
     { new: true }
   );
-  console.log(updatedPackage)
+  console.log(updatedPackage);
   if (updatedPackage !== null) res.json(updatedPackage);
   else {
     res.status(500).json({ message: "package not found" });
   }
 };
 
-
+export const viewPackages: (
+  req: Request,
+  res: Response
+) => Promise<any> = async (req, res) => {
+  try {
+    const packages = await Package.find().lean();
+    return res.status(200).json(packages);
+  } catch (err) {
+    if (err instanceof Error) {
+      res.status(500).json({ message: err.message });
+    } else {
+      res.status(500).json({ message: "An unknown error occurred" });
+    }
+  }
+};

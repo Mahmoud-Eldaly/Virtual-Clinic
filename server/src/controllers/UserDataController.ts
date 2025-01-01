@@ -60,6 +60,7 @@ export const login: (req: Request, res: Response) => Promise<any> = async (
         user.userName = admin.userName;
         user.id = admin._id;
       }
+      //TODO:: i see that storing email here is not good idea, if updated, cookies won't notice
       if (doctor) {
         if (!bcrypt.compareSync(req.body.password, doctor.password))
           return res.status(401).send("Wrong Password");

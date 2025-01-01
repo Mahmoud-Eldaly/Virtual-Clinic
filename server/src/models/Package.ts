@@ -1,6 +1,6 @@
 import { model, Schema } from "mongoose";
 
-interface IPackage {
+interface IPackage extends Document {
   name: string;
   price: number;
   sessionDiscount: number;
@@ -9,11 +9,11 @@ interface IPackage {
 }
 
 export const packageSchema: Schema = new Schema<IPackage>({
-  name: { type: String },
-  price: { type: Number },
-  sessionDiscount: { type: Number },
-  pharmacyDiscount: { type: Number },
-  familyDiscount: { type: Number },
+  name:  String ,
+  price:  Number ,
+  sessionDiscount: Number ,
+  pharmacyDiscount:  Number ,
+  familyDiscount:  Number ,
 });
 
 

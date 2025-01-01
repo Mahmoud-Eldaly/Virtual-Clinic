@@ -71,7 +71,10 @@ const doctorSchema = new Schema({
   },
   approved: { type: Boolean, default: false },
   employmentContractAccepted: { type: Boolean, default: false },
-  employmentContract: { type: String },
+  employmentContract: {
+    data: { type: Buffer, required: true }, // Ensure this is defined correctly
+    contentType: { type: String, required: true },
+  },
   availableSlots: { type: Array, default: [] },
   wallet: { type: Number, default: 0 },
   resetPasswordToken: { type: String },

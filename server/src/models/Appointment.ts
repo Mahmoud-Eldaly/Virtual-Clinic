@@ -2,7 +2,7 @@ import { Schema, model, connect, Types, Document } from "mongoose";
 import Doctor from "./Doctor";
 import Patient from "./Patient";
 
-enum statusEnum {
+export enum statusEnum {
   Reserved = "reserved",
   Cancelled = "cancelled",
   Done = "done",
@@ -17,6 +17,9 @@ const appointmentSchema: Schema = new Schema({
     enum: Object.values(statusEnum),
     default: statusEnum.Reserved,
   },
+  prescription: { type: [String], default: [] },
+  familyMemberName: { type: String, required: false },
+  pricePaid: Number,
 });
 
 const Appointment = model("Appointment", appointmentSchema);

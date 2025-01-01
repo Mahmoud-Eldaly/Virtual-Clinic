@@ -14,7 +14,7 @@ const authenticateToken: (
   next: NextFunction
 ) => Promise<any> = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    console.log("try to auth ", req.cookies, res.headersSent);
+   // console.log("try to auth ", req.cookies, res.headersSent);
     if (req.cookies?.jwt && req.cookies?.accessToken) {
       const accessToken = req.cookies.accessToken;
       const refreshToken = req.cookies.jwt;
@@ -32,7 +32,7 @@ const authenticateToken: (
           } else {
             validAccess = true;
             data = decoded;
-            console.log("decoded:", decoded);
+           // console.log("decoded:", decoded);
           }
         }
       );
