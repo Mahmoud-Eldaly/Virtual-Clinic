@@ -20,8 +20,8 @@ const AppointmentRouter = express.Router();
 AppointmentRouter.delete("/remove-appointment/:id", (req, res) =>
   removeAppointment(req, res)
 );
-AppointmentRouter.put("/update-appointment/:id", (req, res) => {
-  updateAppointment(req, res);
-});
+// AppointmentRouter.put("/update-appointment/:id", (req, res) => {
+//   updateAppointment(req, res);
+// });
 
 export default AppointmentRouter;

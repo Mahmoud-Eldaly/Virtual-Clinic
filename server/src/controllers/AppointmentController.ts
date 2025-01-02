@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 const jwt = require("jsonwebtoken");
-import Appointment from "../models/Appointment";
+import Appointment, { statusEnum } from "../models/Appointment";
 import Doctor from "../models/Doctor";
 import Patient from "../models/Patient";
 import InvalidToken from "../models/InvalidTokens";
@@ -89,7 +89,7 @@ export const addAppointment: (
             doctor: decoded?.doctor,
             date: decoded?.date,
             familyMember: decoded?.familyMember,
-            paidPrice: decoded?.paidPrice,
+            pricePaid: decoded?.paidPrice,
           });
 
           const addedApp = await appointment.save();
@@ -172,19 +172,78 @@ export const removeAppointment: (
 export const updateAppointment: (
   req: Request,
   res: Response
-) => Promise<void> = async (req, res) => {
+) => Promise<any> = async (req, res) => {
   try {
-    console.log("updating", req.body);
-    const appointmentId = req.params.id;
-    const updatedAppointment = await Appointment.findByIdAndUpdate(
-      appointmentId,
-      { ...req.body },
-      { new: true, runValidators: true }
-    );
-    console.log(updatedAppointment);
-    if (updatedAppointment !== null) res.json(updatedAppointment);
-    else {
-      res.status(500).json({ message: "appointment not found" });
+    // console.log("updating", req.body);
+    const appointmentId = req.body.appointmentId;
+    const prescriptionItems = req.body.prescription??[];
+    const appointment = await Appointment.findById(appointmentId);
+    if (appointment?.status == statusEnum.Cancelled) {
+      return res
+        .status(401)
+        .json({ message: "Cancelled Appointments can not be updated!!" });
+    }
+    // const status = req.params.status;
+    if (req.user?.type == "doctor") {
+      if (req.user.id != appointment?.doctor) {
+        return res.status(403).json({
+          message: "You are not allowed to update this appointment!!",
+        });
+      }
+      if (req.body.status == statusEnum.Cancelled) {
+       await Patient.updateOne(
+          { _id: appointment!.patient },
+          { $inc: { wallet: appointment?.pricePaid! } }
+        );
+      }
+      const updatedAppointment = await Appointment.findByIdAndUpdate(
+        appointmentId,
+        {
+          ...req.body,
+          $push: {
+            prescription: {
+              $each: [...prescriptionItems],
+            },
+          },
+        },
+        { new: true, runValidators: true }
+      );
+      console.log(updatedAppointment);
+      if (updatedAppointment !== null) return res.json(updatedAppointment);
+      else {
+        return res.status(500).json({ message: "appointment not found" });
+      }
+    } else if (req.user?.type == "patient") {
+      //no rescheduling allowed
+      if (req.user.id != appointment?.patient) {
+        return res.status(403).json({
+          message: "You are not allowed to update this appointment!!",
+        });
+      }
+      const now = new Date();
+      const next24Hours = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+      if (
+        req.body.status == statusEnum.Cancelled &&
+        appointment?.date! > next24Hours
+      ) {
+        console.log("refunding...");
+        await Patient.updateOne(
+          { _id: appointment!.patient },
+          { $inc: { wallet: appointment?.pricePaid! } }
+        );
+      }
+      await Doctor.updateOne(
+        { _id: appointment!.doctor },
+        { $push: { availableSlots: appointment?.date! } }
+      );
+      const updatedAppointment = await Appointment.findByIdAndUpdate(
+        appointmentId,
+        {
+          status: req.body.status,
+        },
+        { new: true, runValidators: true }
+      );
+      return res.status(200).json(updatedAppointment);
     }
   } catch (err) {
     if (err instanceof Error) {

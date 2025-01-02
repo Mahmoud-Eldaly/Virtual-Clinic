@@ -18,7 +18,10 @@ import {
   addMedicalHistoryItemToPatient,
   viewMedicalHistoryItemsOfPatient,
 } from "../../controllers/PatientController";
-import { getFilteredAppointments } from "../../controllers/AppointmentController";
+import {
+  getFilteredAppointments,
+  updateAppointment,
+} from "../../controllers/AppointmentController";
 const multer = require("multer");
 
 const upload = multer({ storage: multer.memoryStorage() });
@@ -48,11 +51,14 @@ DoctorRouter.put(
   (req, res) => addMedicalHistoryItemToPatient(req, res)
 );
 
+DoctorRouter.put("/update-appointment", (req, res) =>
+  updateAppointment(req, res)
+);
+
 DoctorRouter.get("/view-health-records/:id", (req, res) =>
   viewMedicalHistoryItemsOfPatient(req, res)
 );
 
 DoctorRouter.post("/add-slots", (req, res) => addTimeSlots(req, res));
-
 
 export default DoctorRouter;

@@ -18,6 +18,7 @@ import { viewDoctorAvailableSlots } from "../../controllers/DoctorController";
 import {
   addAppointment,
   getFilteredAppointments,
+  updateAppointment,
 } from "../../controllers/AppointmentController";
 import { viewPackages } from "../../controllers/PackageController";
 import {
@@ -66,6 +67,8 @@ PatientRouter.post("/pay-package", (req, res) => pay_package(req, res))
 PatientRouter.post("/pay-reserve-appiontment", (req, res) => pay_appointment(req, res));
 
 PatientRouter.post("/add-appointment", (req, res) => addAppointment(req, res));
+
+PatientRouter.put("/update-appointment", (req, res) => updateAppointment(req, res));
 
 PatientRouter.get("/my-data", (req, res) => getMyData(req, res));
 
