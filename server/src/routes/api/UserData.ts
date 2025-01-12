@@ -1,5 +1,12 @@
 import express, { Request, Response, NextFunction } from "express";
-import { changeMyPassword, forgetPassword, login, logout, signup, verifyResetPassword } from "../../controllers/UserDataController";
+import {
+  changeMyPassword,
+  forgetPassword,
+  login,
+  logout,
+  signup,
+  verifyResetPassword,
+} from "../../controllers/UserDataController";
 import authenticateToken from "../../middlewares/Authentication";
 
 const UserDataRouter = express.Router();
@@ -18,10 +25,13 @@ UserDataRouter.post(
 );
 UserDataRouter.post("/login", (req, res) => login(req, res));
 UserDataRouter.get("/logout", (req, res) => logout(req, res));
-UserDataRouter.put("/change-password",authenticateToken ,(req, res) => changeMyPassword(req, res));
-UserDataRouter.put("/reset-password" ,(req, res) => verifyResetPassword(req, res));
+UserDataRouter.put("/change-password", authenticateToken, (req, res) =>
+  changeMyPassword(req, res)
+);
+UserDataRouter.put("/reset-password", (req, res) =>
+  verifyResetPassword(req, res)
+);
 
 UserDataRouter.post("/forget-password", (req, res) => forgetPassword(req, res));
-
 
 export default UserDataRouter;

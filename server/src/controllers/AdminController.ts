@@ -5,13 +5,11 @@ import Doctor from "../models/Doctor";
 var bcrypt = require("bcryptjs");
 //Here Goes Endpoints related to the DB Model
 
-
 export const addAdmin: (req: Request, res: Response) => Promise<any> = async (
   req: Request,
   res: Response
 ) => {
   try {
-    console.log(req.user);
     const noDuplicateUsername = await DuplicateUsername(req.body.userName);
     if (noDuplicateUsername) {
       var hash = bcrypt.hashSync(req.body.password, 8);
@@ -42,10 +40,10 @@ export const removeAdmin: (
       res.status(404).send("User not found");
       return;
     }
-    res.send(admin);
+    res
+      .status(200)
+      .json({ message: "admin removed successfully", removedAdmin: admin });
   } catch (err) {
     console.log(err);
   }
 };
-
-

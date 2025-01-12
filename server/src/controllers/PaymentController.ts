@@ -2,12 +2,12 @@ import Doctor from "../models/Doctor";
 import Package from "../models/Package";
 import Patient from "../models/Patient";
 import { Request, Response } from "express";
+import ValidToken from "../models/ValidTokens";
 
 require("dotenv").config();
 const stripe = require("stripe")(process.env.STRIPE_SECRET);
 const jwt = require("jsonwebtoken");
-// TODO:: What if he had no siffecient amount or cancelled
-// Viel Erfolg und bis Morgen :)
+
 export const pay_appointment: (
   req: Request,
   res: Response
@@ -24,18 +24,17 @@ export const pay_appointment: (
       const familyMember = patient?.familyMembers.find(
         (member) => member._id == familyMemberID
       );
-      if (familyMember?.package) {
-        // const memberPackage=a
+      if (familyMember?.package && familyMember?.packageRenewalDate!>new Date()) {
         paidPrice -=
           paidPrice * (familyMember?.package?.sessionDiscount as number);
       }
     } else {
       const patientPackage = patient?.subscribedPackage;
-      if (patientPackage) {
+      if (patientPackage && patient?.renewalDate!>new Date()) {
         paidPrice -= paidPrice * (patientPackage.sessionDiscount as number);
       }
     }
-    console.log("paidprice=",paidPrice);
+    console.log("paidprice=", paidPrice);
     // sending family member as ID NOT NAME
     const tokenData = {
       patientId: req.user?.id,
@@ -53,9 +52,11 @@ export const pay_appointment: (
       }
     );
     console.log(reservedAppToken);
+    const validToken = new ValidToken({ token: reservedAppToken });
+    await validToken.save();
     if (paidPrice - tokenData.paidFromWallet <= 0) {
       return res.json({
-        url: `http://localhost:3000/individual-trainee/my-courses?added=${reservedAppToken}`,
+        url: `http://localhost:3000/some-frontend-dir?token=${reservedAppToken}`,
       });
     }
     const session = await stripe.checkout.sessions.create({
@@ -68,14 +69,16 @@ export const pay_appointment: (
             product_data: {
               name: `Reserve Appointment at ${req.body.date} with doctor ${doctor?.name}`,
             },
-            unit_amount: Math.round((tokenData.paidPrice - tokenData.paidFromWallet)*100),
+            unit_amount: Math.round(
+              (tokenData.paidPrice - tokenData.paidFromWallet) * 100
+            ),
           },
           quantity: 1,
         },
       ],
       //where to go in frontend?
-      success_url: `http://localhost:3000/individual-trainee/my-courses?added=${reservedAppToken}`, //to mycourses with param courseId?
-      cancel_url: `http://localhost:3000/individual-trainee/all-courses`, //to allCoursesn
+      success_url: `http://localhost:3000/some-frontend-dir?token=${reservedAppToken}`, 
+      cancel_url: `http://localhost:3000/some-frontend-dir`, 
       // customer: req.user?.stripeId,
       payment_intent_data: { setup_future_usage: "on_session" },
     });
@@ -117,10 +120,13 @@ export const pay_package: (
         expiresIn: "15m",
       }
     );
+    console.log(subscribedPackageToken);
+    const validToken = new ValidToken({ token: subscribedPackageToken });
+    await validToken.save();
 
     if (paidPrice - tokenData.paidFromWallet <= 0) {
       return res.json({
-        url: `http://localhost:3000/individual-trainee/my-courses?added=${subscribedPackageToken}`,
+        url: `http://localhost:3000/some-frontend-dir?token=${subscribedPackageToken}`,
       });
     }
     const session = await stripe.checkout.sessions.create({
@@ -133,13 +139,15 @@ export const pay_package: (
             product_data: {
               name: `Subscrbe to medical package ${_package?.name} `,
             },
-            unit_amount: Math.round((tokenData.paidPrice - tokenData.paidFromWallet)*100),
+            unit_amount: Math.round(
+              (tokenData.paidPrice - tokenData.paidFromWallet) * 100
+            ),
           },
           quantity: 1,
         },
       ],
-      success_url: `http://localhost:3000/individual-trainee/my-courses?added=${subscribedPackageToken}`, //to mycourses with param courseId?
-      cancel_url: `http://localhost:3000/individual-trainee/all-courses`, //to allCoursesn
+      success_url: `http://localhost:3000/some-frontend-dir?token=${subscribedPackageToken}`, 
+      cancel_url: `http://localhost:3000/some-frontend-dir2`,
       // customer: req.user.stripeId,
       payment_intent_data: { setup_future_usage: "on_session" },
     });

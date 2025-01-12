@@ -21,7 +21,10 @@ import { DuplicateUsername } from "../utils/DublicateUserNameChecker";
 //   availableSlots?: Array<{ startTime: Date; endTime: Date }>;
 //   wallet: number;
 // }
-
+const employmentContractSchema = new Schema({
+  data: { type: Buffer, required: true },
+  contentType: { type: String, required: true },
+});
 // 2. Create a Schema corresponding to the document interface.
 const doctorSchema = new Schema({
   name: {
@@ -72,8 +75,17 @@ const doctorSchema = new Schema({
   approved: { type: Boolean, default: false },
   employmentContractAccepted: { type: Boolean, default: false },
   employmentContract: {
-    data: { type: Buffer, required: true }, // Ensure this is defined correctly
-    contentType: { type: String, required: true },
+    type: employmentContractSchema,
+    required: false,
+    validate: {
+      validator: function (value: { data: any; contentType: any; }) {
+        if (value) {
+          return value.data && value.contentType;
+        }
+        return true;
+      },
+      message: 'Both data and contentType are required if employmentContract is provided',
+    },
   },
   availableSlots: { type: Array, default: [] },
   wallet: { type: Number, default: 0 },

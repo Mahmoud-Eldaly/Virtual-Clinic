@@ -6,6 +6,7 @@ import Appointment, { statusEnum } from "../models/Appointment";
 import { calculateAge } from "../utils/CalcAge";
 import mongoose from "mongoose";
 import Package from "../models/Package";
+import ValidToken from "../models/ValidTokens";
 var bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
@@ -58,7 +59,7 @@ export const removePatient: (
       return;
     }
 
-    res.send(patient);
+    res.status(200).json({message:"patient was removed successfully", removedPatient:patient});
   } catch (err) {
     if (err instanceof Error) {
       res.status(500).json({ message: err.message });
@@ -76,7 +77,8 @@ export const addMyMedicalHistoryItems: (
     const files = req.files as {
       medicalHistoryItems: Express.Multer.File[];
     };
-    console.log("Med history items", files.medicalHistoryItems);
+    console.log("in patient add item", req.files);
+    // console.log("Med history items", req);
     const rejectedFiles = files.medicalHistoryItems.filter(
       (file) =>
         !file.mimetype.toLocaleLowerCase().endsWith("/jpeg") &&
@@ -99,7 +101,9 @@ export const addMyMedicalHistoryItems: (
       },
       { new: true }
     );
-    return res.status(200).json(patient);
+    return res
+      .status(200)
+      .json({"currentItemsNames":patient?.medicalHistoryItems.map((item) => item.originalname)});
   } catch (err) {
     if (err instanceof Error) {
       res.status(500).json({ message: err.message });
@@ -152,7 +156,9 @@ export const addMedicalHistoryItemToPatient: (
       },
       { new: true }
     );
-    return res.status(200).json(patient?.medicalHistoryItems);
+    return res
+      .status(200)
+      .json({"currentItemsNames":patient?.medicalHistoryItems.map((item) => item.originalname)});
   } catch (err) {
     if (err instanceof Error) {
       res.status(500).json({ message: err.message });
@@ -373,9 +379,14 @@ export const subscribeForPackage: (
   res: Response
 ) => Promise<any> = async (req, res) => {
   try {
-    //TODO::there must be token verfication here!!!
     console.log(req.body);
     const token = req.body.token;
+    const valid = await ValidToken.findOneAndDelete({ token: token });
+    if (!valid) {
+      return res
+        .status(401)
+        .json({ message: "token is invalid, already used before" });
+    }
     jwt.verify(
       token,
       process.env.SUBSCRIBE_PACKAGE_SECRET,
@@ -388,7 +399,7 @@ export const subscribeForPackage: (
           let data = decoded;
           console.log(decoded);
           const patient2 = await Patient.findById(req.user?.id);
-          if (patient2?.wallet!< decoded?.paidFromWallet!) {
+          if (patient2?.wallet! < decoded?.paidFromWallet!) {
             console.log(
               "wallet has no enough Moneeeeeeeeeeeeeeeeeeeeeeeeeeeeey!!"
             );
@@ -400,7 +411,7 @@ export const subscribeForPackage: (
                 },
               }
             );
-
+            //test it
             return res.status(401).json({
               message:
                 "Wallet Money is not enough to pay, it was changed since last payment, money paid on strip was returned to wallet!",

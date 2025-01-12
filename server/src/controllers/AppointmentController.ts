@@ -3,7 +3,7 @@ const jwt = require("jsonwebtoken");
 import Appointment, { statusEnum } from "../models/Appointment";
 import Doctor from "../models/Doctor";
 import Patient from "../models/Patient";
-import InvalidToken from "../models/InvalidTokens";
+import ValidToken from "../models/ValidTokens";
 //Here Goes Endpoints related to the DB Model
 
 interface ReserveToken {
@@ -23,8 +23,8 @@ export const addAppointment: (
 ) => Promise<any> = async (req: Request, res: Response) => {
   try {
     const token = req.body.token;
-    const invalid = await InvalidToken.findOne({ token: token });
-    if (invalid) {
+    const valid = await ValidToken.findOneAndDelete({ token: token });
+    if (!valid) {
       return res
         .status(401)
         .json({ message: "token is invalid, already used before" });
@@ -42,13 +42,18 @@ export const addAppointment: (
         } else {
           let data = decoded;
           console.log("decoded=", decoded);
-          const invalidToken = new InvalidToken({ token: token });
+          const invalidToken = new ValidToken({ token: token });
           await invalidToken.save();
           const doctor = await Doctor.findById(
             decoded?.doctor,
             "availableSlots"
           );
-          if (!doctor?.availableSlots.includes(decoded?.date)) {
+          //dates.map(date => date.toISOString()).includes(specificDate.toISOString());
+          if (
+            !doctor?.availableSlots
+              .map((date) => date.toISOString())
+              .includes(decoded?.date)
+          ) {
             console.log("dr=", doctor);
             //if appiontment is already gone, return the whole paid price (wallet+stripe) to the wallet
 
@@ -120,7 +125,8 @@ export const getFilteredAppointments: (
   //gets appointments, or prescriptions if type is specifyied to prescriptions
   try {
     console.log("params:", req.query);
-    const { date_gte, date_lte, status, type } = req.query;
+    // const { date_gte, date_lte, status, type } = req.query;
+    const { date_gte, date_lte, status } = req.query;
     const filter: any = {};
     if (req.user?.type === "doctor") filter.doctor = req.user.id;
     if (req.user?.type === "patient") filter.patient = req.user.id;
@@ -129,11 +135,11 @@ export const getFilteredAppointments: (
     if (date_lte) filter.date.$lte = date_lte;
     if (status) filter.status = status;
     console.log(filter.status, status, filter);
-    if (type === "prescription") {
-      filter.status = "done";
-      const prescriptions = await Appointment.find(filter, "prescription");
-      return res.status(200).json(prescriptions);
-    }
+    // if (type === "prescription") {
+    //   filter.status = "done";
+    //   const prescriptions = await Appointment.find(filter, "prescription");
+    //   return res.status(200).json(prescriptions);
+    // }
     const filteredApps = await Appointment.find(filter);
     return res.status(200).json(filteredApps);
   } catch (err) {
@@ -159,7 +165,12 @@ export const removeAppointment: (
       return;
     }
 
-    res.send(removedappointment);
+    res
+      .status(200)
+      .json({
+        message: "appointment was removed successfully",
+        removedAppointment: removedappointment,
+      });
   } catch (err) {
     if (err instanceof Error) {
       res.status(500).json({ message: err.message });
@@ -176,7 +187,7 @@ export const updateAppointment: (
   try {
     // console.log("updating", req.body);
     const appointmentId = req.body.appointmentId;
-    const prescriptionItems = req.body.prescription??[];
+    const prescriptionItems = req.body.prescription ?? [];
     const appointment = await Appointment.findById(appointmentId);
     if (appointment?.status == statusEnum.Cancelled) {
       return res
@@ -191,7 +202,7 @@ export const updateAppointment: (
         });
       }
       if (req.body.status == statusEnum.Cancelled) {
-       await Patient.updateOne(
+        await Patient.updateOne(
           { _id: appointment!.patient },
           { $inc: { wallet: appointment?.pricePaid! } }
         );
@@ -209,7 +220,8 @@ export const updateAppointment: (
         { new: true, runValidators: true }
       );
       console.log(updatedAppointment);
-      if (updatedAppointment !== null) return res.json(updatedAppointment);
+      if (updatedAppointment !== null)
+        return res.json({ updatedAppointment: updatedAppointment });
       else {
         return res.status(500).json({ message: "appointment not found" });
       }
@@ -222,10 +234,7 @@ export const updateAppointment: (
       }
       const now = new Date();
       const next24Hours = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-      if (
-        req.body.status == statusEnum.Cancelled &&
-        appointment?.date! > next24Hours
-      ) {
+      if (appointment?.date! > next24Hours) {
         console.log("refunding...");
         await Patient.updateOne(
           { _id: appointment!.patient },
@@ -239,7 +248,7 @@ export const updateAppointment: (
       const updatedAppointment = await Appointment.findByIdAndUpdate(
         appointmentId,
         {
-          status: req.body.status,
+          status: statusEnum.Cancelled,
         },
         { new: true, runValidators: true }
       );

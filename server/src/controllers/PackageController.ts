@@ -33,7 +33,12 @@ export const removePackage: (
       return;
     }
 
-    res.send(removedpackage);
+    res
+      .status(200)
+      .json({
+        message: "package was removed successfully",
+        removedPackage: removedpackage,
+      });
   } catch (err) {
     console.log(err);
   }

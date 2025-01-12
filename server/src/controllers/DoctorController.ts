@@ -85,7 +85,12 @@ export const removeDoctor: (
       res.status(404).send("User not found");
       return;
     }
-    res.send(doctor);
+    res
+      .status(200)
+      .json({
+        message: "doctor was removed successfully",
+        removedDoctor: doctor,
+      });
   } catch (err) {
     console.log(err);
   }
@@ -123,9 +128,6 @@ export const getFilteredDoctors: (
     if (userName) filter.userName = userName;
     if (email) filter.email = email;
     if (affiliation) filter.affiliation = affiliation;
-    if (approved !== undefined) filter.approved = approved;
-    if (employmentContractAccepted !== undefined)
-      filter.employmentContractAccepted = employmentContractAccepted;
 
     if (hourlyRate_gt || hourlyRate_gte || hourlyRate_lt || hourlyRate_lte)
       filter.hourlyRate = {};
@@ -136,6 +138,10 @@ export const getFilteredDoctors: (
 
     if (req.user?.type === "admin") {
       //Only Admin can filter by wallet ;)
+      if (approved !== undefined) filter.approved = approved;
+      console.log("approved", approved);
+      if (employmentContractAccepted !== undefined)
+        filter.employmentContractAccepted = employmentContractAccepted;
       if (wallet_gt || wallet_gte || wallet_lt || wallet_lte)
         filter.wallet = {};
       if (wallet_gt) filter.wallet.$gt = Number(wallet_gt);
@@ -147,14 +153,16 @@ export const getFilteredDoctors: (
       const doctors = await Doctor.find(filter).select("-password");
       res.status(200).json(doctors);
     } else {
+      filter.approved = true;
+      filter.employmentContractAccepted = true;
       const doctors = await Doctor.find(filter).select(
-        "-password -nationalID -medicalDegree -medicalLicence -wallet"
+        "-password -nationalID -medicalDegree -medicalLicence -wallet -employmentContract -approved -employmentContractAccepted"
       );
-      //patient see only valid doctors ready to deal with
-      const validDoctors = doctors.filter(
-        (d) => d.approved && d.employmentContractAccepted
-      );
-      res.status(200).json(validDoctors);
+      //patient see only valid doctors ready to deal with (updated::using filter)
+      // const validDoctors = doctors.filter(
+      //   (d) => d.approved && d.employmentContractAccepted
+      // );
+      res.status(200).json(doctors);
     }
   } catch (err) {
     console.log("error occured!!!");
@@ -198,7 +206,7 @@ export const updateDoctor: (
   const updatedDoctor = await Doctor.findByIdAndUpdate(
     doctorId,
     { ...req.body },
-    { new: true }
+    { new: true, projection: Object.keys(req.body).join(" ") }
   );
   console.log(updatedDoctor);
   if (updatedDoctor !== null) res.json(updatedDoctor);
@@ -249,7 +257,8 @@ export const approveDoctor: (
               console.log("File deleted successfully");
             }
           });
-        return res.status(200).json(updatedDoctor);
+        const message = "Approved doctor with id=" + updatedDoctor?.id!;
+        return res.status(200).json({ message: message });
       }
     });
   } catch (err) {
@@ -364,7 +373,7 @@ export const AcceptMyContract: (
       { employmentContractAccepted: true },
       { new: true, runValidators: true }
     );
-    res.status(200).json(updatedDoctor);
+    res.status(200).json({ message: "Contract Accepted Successfully" });
   } catch (err) {
     if (err instanceof Error) {
       res.status(500).json({ message: err.message });
@@ -399,7 +408,9 @@ export const addTimeSlots: (
       },
       { new: true, runValidators: true }
     );
-    return res.status(200).json(updatedDoctor?.availableSlots);
+    return res
+      .status(200)
+      .json({ currentFreeSlots: updatedDoctor?.availableSlots });
   } catch (err) {
     if (err instanceof Error) {
       res.status(500).json({ message: err.message });

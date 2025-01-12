@@ -5,10 +5,9 @@ interface Itoken extends Document {
 }
 
 export const tokenSchema: Schema = new Schema<Itoken>({
-  token:{type:String,required:true}
+  token: { type: String, required: true },
 });
 
+const ValidToken = model<Itoken>("ValidToken", tokenSchema);
 
-const InvalidToken = model<Itoken>("InvalidToken", tokenSchema);
-
-export default InvalidToken;
+export default ValidToken;
