@@ -371,7 +371,7 @@ Response
 **New user signup as patient or doctor**
 
 ```http
-POST/endpoint
+POST/signup
 ```
 **Accessible by:** Guests
 
