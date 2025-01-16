@@ -233,7 +233,7 @@ export default authenticateToken;
 ```
 2) Install NPM packages in server
 ```bash
-  cd 5AM-club-/server
+  cd ./Virtual-Clinic/server
   npm install --force
   ```
 
@@ -346,7 +346,7 @@ Response
 ```http
 Put/reset-password
 ```
-
+Path Parameters
 | Parameter | Type     | Description                |
 | :-------- | :------- | :------------------------- |
 | `userName` | `string` | **Required**. Holds the account username of changing password.|
@@ -1930,10 +1930,12 @@ Headers
 Query Params
 | Parameter | Type     | Description                |
 | :-------- | :------- | :------------------------- |
+| `doctor` | `string` | Holds the desired appointments doctor.|
+| `patient` | `string` | Holds the desired appointments patient.|
 | `status` | `string` | Holds the desired appointments status.|
 | `date_gte` | `string` | Holds the desired appointments starting date.|
 | `date_lte` | `string` | Holds the desired appointments ending date.|
-**Accessible by:** Patient and Doctor
+**Accessible by:** Admin
 
 Response
 ```json

@@ -24,3 +24,6 @@ build/
 
 # Coverage output
 coverage/
+
+#for Todos
+.Todos
